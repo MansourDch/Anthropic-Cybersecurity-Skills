@@ -1,0 +1,3 @@
+## 2026-08-04 - Validate-Skill Regular Expression Overhead
+**Learning:** Re-compiling regular expressions on every invocation within `parse_frontmatter` adds measurable overhead during processing of over 800 markdown files. The `re.match` is called inside a loop over every line of the frontmatter for every file. Profiling shows a significant time spent in `re.match` and regex compilation.
+**Action:** When evaluating regex in frequently executed code, compile them at the module level rather than calling `re.match` with string literals directly inside loops. Better yet, avoid regex altogether if simple string operations can be used cleanly.
