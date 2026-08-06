@@ -1,0 +1,3 @@
+## 2026-08-06 - Pre-compiling Regex in Tight Loops
+**Learning:** Implicit regex compilation (`re.match(r"pattern", string)`) in tight loops across multiple files (like in parsing YAML frontmatter line-by-line across 800+ Markdown files) causes noticeable overhead. Even though Python caches compiled regexes, the cache lookup and associated function calls (`re.compile`, `match` wrapper) in a tight loop create a measurable bottleneck.
+**Action:** Always extract static regular expressions to module-level constants and pre-compile them with `re.compile()` when they will be used inside loops or frequently called functions, especially in file parsers or data processing scripts.
