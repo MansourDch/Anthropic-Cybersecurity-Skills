@@ -80,6 +80,13 @@ GREEN = "\033[92m"
 YELLOW = "\033[93m"
 RESET = "\033[0m"
 
+# Pre-compiled regexes for frontmatter parsing.
+# Compiling these once at the module level rather than calling re.match()
+# on every line avoids significant overhead across 800+ skill files.
+INLINE_LIST_RE = re.compile(r"^(\w[\w_-]*):\s*\[(.+)\]\s*$")
+FOLDED_SCALAR_RE = re.compile(r"^(\w[\w_-]*):\s*>[-|]?\s*$")
+PLAIN_SCALAR_RE = re.compile(r'^(\w[\w_-]*):\s*(.*)$')
+
 
 def parse_frontmatter(text):
     """Extract YAML frontmatter as a dict (simple stdlib-only parser).
@@ -144,7 +151,7 @@ def parse_frontmatter(text):
             continue
 
         # Handle inline list: tags: [a, b, c]
-        m = re.match(r"^(\w[\w_-]*):\s*\[(.+)\]\s*$", stripped)
+        m = INLINE_LIST_RE.match(stripped)
         if m:
             current_key = m.group(1)
             items = [i.strip().strip('"').strip("'") for i in m.group(2).split(",")]
@@ -153,7 +160,7 @@ def parse_frontmatter(text):
             continue
 
         # Handle key: >- or key: > (folded scalar start)
-        m = re.match(r"^(\w[\w_-]*):\s*>[-|]?\s*$", stripped)
+        m = FOLDED_SCALAR_RE.match(stripped)
         if m:
             current_key = m.group(1)
             list_values = []
@@ -162,7 +169,7 @@ def parse_frontmatter(text):
             continue
 
         # Handle key: value (plain scalar)
-        m = re.match(r'^(\w[\w_-]*):\s*(.*)$', stripped)
+        m = PLAIN_SCALAR_RE.match(stripped)
         if m:
             current_key = m.group(1)
             val = m.group(2).strip().strip('"').strip("'")
