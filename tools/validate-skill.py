@@ -71,6 +71,9 @@ for canonical, aliases in _SUBDOMAIN_ALIASES.items():
         _ALIAS_TO_CANONICAL[alias] = canonical
 
 KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+RE_INLINE_LIST = re.compile(r"^(\w[\w_-]*):\s*\[(.+)\]\s*$")
+RE_FOLDED_SCALAR = re.compile(r"^(\w[\w_-]*):\s*>[-|]?\s*$")
+RE_SCALAR = re.compile(r'^(\w[\w_-]*):\s*(.*)$')
 
 # Minimum description length.  Other repo tooling uses 50 chars; align here.
 DESCRIPTION_MIN_CHARS = 50
@@ -144,7 +147,7 @@ def parse_frontmatter(text):
             continue
 
         # Handle inline list: tags: [a, b, c]
-        m = re.match(r"^(\w[\w_-]*):\s*\[(.+)\]\s*$", stripped)
+        m = RE_INLINE_LIST.match(stripped)
         if m:
             current_key = m.group(1)
             items = [i.strip().strip('"').strip("'") for i in m.group(2).split(",")]
@@ -153,7 +156,7 @@ def parse_frontmatter(text):
             continue
 
         # Handle key: >- or key: > (folded scalar start)
-        m = re.match(r"^(\w[\w_-]*):\s*>[-|]?\s*$", stripped)
+        m = RE_FOLDED_SCALAR.match(stripped)
         if m:
             current_key = m.group(1)
             list_values = []
@@ -162,7 +165,7 @@ def parse_frontmatter(text):
             continue
 
         # Handle key: value (plain scalar)
-        m = re.match(r'^(\w[\w_-]*):\s*(.*)$', stripped)
+        m = RE_SCALAR.match(stripped)
         if m:
             current_key = m.group(1)
             val = m.group(2).strip().strip('"').strip("'")
@@ -265,10 +268,12 @@ def main():
     if sys.argv[1] == "--all":
         # Skip .bak backup directories — they are stale copies without a SKILL.md.
         # glob may return OS-native separators, so normalize before checking.
-        skill_dirs = sorted(
-            d for d in glob.glob("skills/*/")
-            if not d.rstrip("/\\").endswith(".bak")
-        )
+        try:
+            skill_dirs = sorted(
+                [os.path.join(f.path, "") for f in os.scandir("skills") if f.is_dir() and not f.name.endswith(".bak")]
+            )
+        except FileNotFoundError:
+            skill_dirs = []
         if not skill_dirs:
             print("ERROR: No skill directories found. Run from the repository root.")
             sys.exit(1)
