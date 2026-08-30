@@ -71,6 +71,10 @@ for canonical, aliases in _SUBDOMAIN_ALIASES.items():
         _ALIAS_TO_CANONICAL[alias] = canonical
 
 KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+# Pre-compile regexes to avoid compiling them on every line of frontmatter.
+INLINE_LIST_RE = re.compile(r"^(\w[\w_-]*):\s*\[(.+)\]\s*$")
+FOLDED_SCALAR_RE = re.compile(r"^(\w[\w_-]*):\s*>[-|]?\s*$")
+PLAIN_SCALAR_RE = re.compile(r'^(\w[\w_-]*):\s*(.*)$')
 
 # Minimum description length.  Other repo tooling uses 50 chars; align here.
 DESCRIPTION_MIN_CHARS = 50
@@ -144,7 +148,7 @@ def parse_frontmatter(text):
             continue
 
         # Handle inline list: tags: [a, b, c]
-        m = re.match(r"^(\w[\w_-]*):\s*\[(.+)\]\s*$", stripped)
+        m = INLINE_LIST_RE.match(stripped)
         if m:
             current_key = m.group(1)
             items = [i.strip().strip('"').strip("'") for i in m.group(2).split(",")]
@@ -153,7 +157,7 @@ def parse_frontmatter(text):
             continue
 
         # Handle key: >- or key: > (folded scalar start)
-        m = re.match(r"^(\w[\w_-]*):\s*>[-|]?\s*$", stripped)
+        m = FOLDED_SCALAR_RE.match(stripped)
         if m:
             current_key = m.group(1)
             list_values = []
@@ -162,7 +166,7 @@ def parse_frontmatter(text):
             continue
 
         # Handle key: value (plain scalar)
-        m = re.match(r'^(\w[\w_-]*):\s*(.*)$', stripped)
+        m = PLAIN_SCALAR_RE.match(stripped)
         if m:
             current_key = m.group(1)
             val = m.group(2).strip().strip('"').strip("'")
