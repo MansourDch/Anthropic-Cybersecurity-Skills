@@ -132,7 +132,9 @@ def parse_frontmatter(text):
         # Handle list items (must come before key: value to avoid misparse).
         if stripped.startswith("- ") and current_key:
             list_values.append(stripped[2:].strip().strip('"').strip("'"))
-            data[current_key] = list(list_values)  # copy so future mutations don't leak
+            # Link the list reference once. Future appends will mutate it in place.
+            if data.get(current_key) is not list_values:
+                data[current_key] = list_values
             continue
 
         # Only TOP-LEVEL keys (column 0) define frontmatter fields. An indented
@@ -149,7 +151,7 @@ def parse_frontmatter(text):
             current_key = m.group(1)
             items = [i.strip().strip('"').strip("'") for i in m.group(2).split(",")]
             data[current_key] = items
-            list_values = list(items)
+            list_values = items
             continue
 
         # Handle key: >- or key: > (folded scalar start)
