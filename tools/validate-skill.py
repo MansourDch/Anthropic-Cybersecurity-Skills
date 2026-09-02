@@ -143,34 +143,28 @@ def parse_frontmatter(text):
         if line[:1].isspace():
             continue
 
-        # Handle inline list: tags: [a, b, c]
-        m = re.match(r"^(\w[\w_-]*):\s*\[(.+)\]\s*$", stripped)
-        if m:
-            current_key = m.group(1)
-            items = [i.strip().strip('"').strip("'") for i in m.group(2).split(",")]
-            data[current_key] = items
-            list_values = list(items)
-            continue
+        # Optimized key-value parsing using str.partition instead of sequential re.match
+        key_part, sep, val_part = stripped.partition(":")
+        if sep and re.match(r"^(\w[\w_-]*)$", key_part):
+            current_key = key_part
+            val = val_part.strip()
 
-        # Handle key: >- or key: > (folded scalar start)
-        m = re.match(r"^(\w[\w_-]*):\s*>[-|]?\s*$", stripped)
-        if m:
-            current_key = m.group(1)
-            list_values = []
-            in_folded = True
-            folded_lines = []
-            continue
-
-        # Handle key: value (plain scalar)
-        m = re.match(r'^(\w[\w_-]*):\s*(.*)$', stripped)
-        if m:
-            current_key = m.group(1)
-            val = m.group(2).strip().strip('"').strip("'")
-            list_values = []  # reset; new scalar key cannot inherit a prior list
-            if val:
-                data[current_key] = val
-            # If val is empty the key is present but value-less (e.g. start of block list)
-            continue
+            if val.startswith("[") and val.endswith("]"):
+                items = [i.strip().strip('"').strip("'") for i in val[1:-1].split(",")]
+                data[current_key] = items
+                list_values = list(items)
+                continue
+            elif val in (">-", ">|", ">"):
+                list_values = []
+                in_folded = True
+                folded_lines = []
+                continue
+            else:
+                val = val.strip('"').strip("'")
+                list_values = []  # reset; new scalar key cannot inherit a prior list
+                if val:
+                    data[current_key] = val
+                continue
 
     # Flush any trailing folded scalar.
     if in_folded and current_key and folded_lines:
