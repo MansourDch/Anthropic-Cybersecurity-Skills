@@ -1,0 +1,3 @@
+## 2024-05-18 - Optimized SKILL.md Frontmatter Parsing
+**Learning:** `re.match` evaluation overhead can be significant in hot loops (e.g. line-by-line file parsing). Calling three overlapping regex checks inline for every line creates a compounding bottleneck. Compiling regex patterns to a module level object was originally attempted but rejected, as Python naturally caches inline string regex compilation. The core issue wasn't the uncompiled string regex lookup, but the redundant overlapping evaluation of multiple regex checks on every line.
+**Action:** Replace multiple sequential regex pattern evaluations with a single generalized regex check, followed by highly optimized string-based logic (`startswith`, `endswith`, `in`) to determine the specific parsing case.

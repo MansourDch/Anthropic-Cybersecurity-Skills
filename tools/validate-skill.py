@@ -143,29 +143,29 @@ def parse_frontmatter(text):
         if line[:1].isspace():
             continue
 
-        # Handle inline list: tags: [a, b, c]
-        m = re.match(r"^(\w[\w_-]*):\s*\[(.+)\]\s*$", stripped)
-        if m:
-            current_key = m.group(1)
-            items = [i.strip().strip('"').strip("'") for i in m.group(2).split(",")]
-            data[current_key] = items
-            list_values = list(items)
-            continue
-
-        # Handle key: >- or key: > (folded scalar start)
-        m = re.match(r"^(\w[\w_-]*):\s*>[-|]?\s*$", stripped)
-        if m:
-            current_key = m.group(1)
-            list_values = []
-            in_folded = True
-            folded_lines = []
-            continue
-
-        # Handle key: value (plain scalar)
+        # Optimization: Use single regex match and string-based checks to reduce
+        # regex evaluation overhead.
         m = re.match(r'^(\w[\w_-]*):\s*(.*)$', stripped)
         if m:
             current_key = m.group(1)
-            val = m.group(2).strip().strip('"').strip("'")
+            val_str = m.group(2).strip()
+
+            # Handle inline list: tags: [a, b, c]
+            if val_str.startswith('[') and val_str.endswith(']'):
+                items = [i.strip().strip('"').strip("'") for i in val_str[1:-1].split(",")]
+                data[current_key] = items
+                list_values = list(items)
+                continue
+
+            # Handle key: >- or key: > (folded scalar start)
+            if val_str in ('>', '>-', '>|'):
+                list_values = []
+                in_folded = True
+                folded_lines = []
+                continue
+
+            # Handle key: value (plain scalar)
+            val = val_str.strip('"').strip("'")
             list_values = []  # reset; new scalar key cannot inherit a prior list
             if val:
                 data[current_key] = val
