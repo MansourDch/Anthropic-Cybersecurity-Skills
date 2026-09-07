@@ -143,34 +143,40 @@ def parse_frontmatter(text):
         if line[:1].isspace():
             continue
 
-        # Handle inline list: tags: [a, b, c]
-        m = re.match(r"^(\w[\w_-]*):\s*\[(.+)\]\s*$", stripped)
-        if m:
-            current_key = m.group(1)
-            items = [i.strip().strip('"').strip("'") for i in m.group(2).split(",")]
-            data[current_key] = items
-            list_values = list(items)
-            continue
+        if ":" in stripped:
+            key, _, rest = stripped.partition(":")
+            is_valid_key = bool(key and (key[0].isalnum() or key[0] == "_"))
+            if is_valid_key and len(key) > 1:
+                is_valid_key = key.replace("-", "a").replace("_", "a").isalnum()
 
-        # Handle key: >- or key: > (folded scalar start)
-        m = re.match(r"^(\w[\w_-]*):\s*>[-|]?\s*$", stripped)
-        if m:
-            current_key = m.group(1)
-            list_values = []
-            in_folded = True
-            folded_lines = []
-            continue
+            if is_valid_key:
+                rest = rest.strip()
 
-        # Handle key: value (plain scalar)
-        m = re.match(r'^(\w[\w_-]*):\s*(.*)$', stripped)
-        if m:
-            current_key = m.group(1)
-            val = m.group(2).strip().strip('"').strip("'")
-            list_values = []  # reset; new scalar key cannot inherit a prior list
-            if val:
-                data[current_key] = val
-            # If val is empty the key is present but value-less (e.g. start of block list)
-            continue
+                # Handle inline list: tags: [a, b, c]
+                if rest.startswith("[") and rest.endswith("]") and len(rest) > 2:
+                    current_key = key
+                    inner = rest[1:-1]
+                    items = [i.strip().strip('"').strip("'") for i in inner.split(",")]
+                    data[current_key] = items
+                    list_values = list(items)
+                    continue
+
+                # Handle key: >- or key: > (folded scalar start)
+                if rest in (">", ">-", ">|"):
+                    current_key = key
+                    list_values = []
+                    in_folded = True
+                    folded_lines = []
+                    continue
+
+                # Handle key: value (plain scalar)
+                current_key = key
+                val = rest.strip('"').strip("'")
+                list_values = []  # reset; new scalar key cannot inherit a prior list
+                if val:
+                    data[current_key] = val
+                # If val is empty the key is present but value-less (e.g. start of block list)
+                continue
 
     # Flush any trailing folded scalar.
     if in_folded and current_key and folded_lines:
