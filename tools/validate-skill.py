@@ -129,10 +129,11 @@ def parse_frontmatter(text):
         if not stripped or stripped.startswith("#"):
             continue
 
+        # PERFORMANCE OPTIMIZATION (Bolt): Remove O(N^2) list copy inside loop.
         # Handle list items (must come before key: value to avoid misparse).
         if stripped.startswith("- ") and current_key:
             list_values.append(stripped[2:].strip().strip('"').strip("'"))
-            data[current_key] = list(list_values)  # copy so future mutations don't leak
+            data[current_key] = list_values  # direct assignment; list_values is rebound, not mutated
             continue
 
         # Only TOP-LEVEL keys (column 0) define frontmatter fields. An indented
