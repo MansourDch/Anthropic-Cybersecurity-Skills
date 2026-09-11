@@ -264,11 +264,14 @@ def main():
 
     if sys.argv[1] == "--all":
         # Skip .bak backup directories — they are stale copies without a SKILL.md.
-        # glob may return OS-native separators, so normalize before checking.
-        skill_dirs = sorted(
-            d for d in glob.glob("skills/*/")
-            if not d.rstrip("/\\").endswith(".bak")
-        )
+        # Use os.scandir() instead of glob.glob() for significantly faster directory traversal.
+        try:
+            skill_dirs = sorted(
+                f"skills/{f.name}/" for f in os.scandir("skills")
+                if f.is_dir() and not f.name.endswith(".bak")
+            )
+        except FileNotFoundError:
+            skill_dirs = []
         if not skill_dirs:
             print("ERROR: No skill directories found. Run from the repository root.")
             sys.exit(1)
