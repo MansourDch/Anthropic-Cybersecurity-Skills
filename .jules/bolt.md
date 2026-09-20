@@ -1,0 +1,3 @@
+## 2026-09-20 - Use os.scandir over glob.glob for directory listing
+**Learning:** Using `glob.glob("skills/*/")` for directory traversal is significantly slower (by ~6x in this codebase) compared to `os.scandir()`. `glob` incurs overhead with pattern matching and stats, while `scandir` yields highly optimized OS-level directory entries.
+**Action:** When filtering directories on hot paths or large file trees in Python, prefer `os.scandir` with `f.is_dir()` and string methods over `glob.glob`. Remember to handle `FileNotFoundError` and manually skip hidden files (`startswith('.')`) to match glob's default behavior.
