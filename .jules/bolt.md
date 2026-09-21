@@ -1,0 +1,3 @@
+## 2024-09-21 - os.scandir performance over glob.glob
+**Learning:** Using `glob.glob("skills/*/")` is significantly slower than using `os.scandir("skills")` because `glob` incurs overhead for stat calls and internal string matching. For iterating over subdirectories in a directory, `os.scandir` is much faster.
+**Action:** When writing Python scripts that iterate through subdirectories (like `tools/validate-skill.py`), use `os.scandir()` in combination with `entry.is_dir()` checks. Be sure to manually filter out hidden directories (`not entry.name.startswith('.')`) to mimic `glob` behavior, and catch `FileNotFoundError` since `scandir` throws an error if the directory doesn't exist, unlike `glob`.

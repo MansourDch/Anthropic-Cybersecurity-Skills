@@ -8,7 +8,6 @@ Usage:
 import os
 import re
 import sys
-import glob
 
 # Kept in sync with the CI workflow (.github/workflows/validate-skills.yml),
 # which now delegates to this script so there is a single source of truth.
@@ -264,11 +263,18 @@ def main():
 
     if sys.argv[1] == "--all":
         # Skip .bak backup directories — they are stale copies without a SKILL.md.
-        # glob may return OS-native separators, so normalize before checking.
-        skill_dirs = sorted(
-            d for d in glob.glob("skills/*/")
-            if not d.rstrip("/\\").endswith(".bak")
-        )
+        skill_dirs_list = []
+        try:
+            with os.scandir("skills") as it:
+                for entry in it:
+                    if entry.is_dir() and not entry.name.startswith('.'):
+                        if not entry.name.endswith(".bak"):
+                            # emulate glob's trailing slash for directories
+                            skill_dirs_list.append(f"skills/{entry.name}/")
+        except FileNotFoundError:
+            pass
+        skill_dirs = sorted(skill_dirs_list)
+
         if not skill_dirs:
             print("ERROR: No skill directories found. Run from the repository root.")
             sys.exit(1)
