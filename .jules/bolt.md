@@ -1,0 +1,3 @@
+## 2024-09-27 - os.scandir vs glob hidden files edge case
+**Learning:** When optimizing directory traversal from `glob.glob("*")` to `os.scandir()`, `os.scandir` does not automatically ignore hidden files/directories (those starting with `.`) like `glob` does. Additionally, `os.scandir` will raise a `FileNotFoundError` if the directory is missing, whereas `glob` just returns an empty list.
+**Action:** When replacing `glob` with `os.scandir` for performance, always wrap it in a `try/except FileNotFoundError` block and explicitly filter out hidden files with `not f.name.startswith('.')` to maintain functional parity.
