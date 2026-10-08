@@ -1,0 +1,3 @@
+## 2024-10-08 - os.scandir vs glob for directory enumeration
+**Learning:** Using `os.scandir` combined with `f.is_dir()` checks is significantly faster (up to ~6x) than `glob.glob("path/*/")` for directory enumeration, especially for directories containing a large number of items. However, to maintain parity, `os.scandir` requires explicitly filtering out hidden files (which `glob` ignores by default) and handling `FileNotFoundError` (which `glob` quietly returns an empty list for).
+**Action:** When iterating over a flat, large list of directories in performance-sensitive scripts, prefer `os.scandir` but explicitly handle hidden files (`not f.name.startswith('.')`) and missing directories to prevent runtime errors and ensure functional equivalence.
