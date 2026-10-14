@@ -1,0 +1,3 @@
+## 2026-10-14 - Directory Listing Performance: `os.scandir` vs `glob.glob`
+**Learning:** Using `glob.glob("skills/*/")` on directories with many subfolders (e.g., ~800 skills) is significantly slower than using `os.scandir()` because `glob` performs extra path matching and `stat` calls behind the scenes. `os.scandir()` caches directory entry information, providing an ~80% speedup for simple iteration and filtering.
+**Action:** Use `os.scandir()` combined with `.is_dir()` and string filtering (and explicitly ignore hidden files like `not f.name.startswith('.')`) instead of `glob.glob` when listing large numbers of directories on hot paths or CLI tool startup.
