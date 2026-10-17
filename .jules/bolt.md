@@ -1,0 +1,3 @@
+## 2026-10-17 - Fast Directory Traversal with os.scandir
+**Learning:** Using `glob.glob` with wildcards like `*` incurs substantial overhead due to internal `os.stat` calls on every element when simply listing directories. In Python, `os.scandir()` provides a vastly superior alternative for directory filtering because it caches file attributes (like `is_dir()`).
+**Action:** When iterating over directory structures (especially with large file counts), prefer `os.scandir()` with `f.is_dir()` and explicitly handle hidden files (`not f.name.startswith('.')`) instead of relying on `glob`. Ensure missing directories are caught via `FileNotFoundError`.
