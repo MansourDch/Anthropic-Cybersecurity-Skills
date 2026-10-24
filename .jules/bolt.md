@@ -1,0 +1,3 @@
+## 2026-10-24 - Faster Directory Traversal with os.scandir
+**Learning:** When listing directories in Python scripts (e.g., `tools/validate-skill.py`), using `os.scandir()` with `f.is_dir()` checks is significantly faster than `glob.glob()`. However, unlike `glob`, `os.scandir` raises a `FileNotFoundError` if the directory is missing, and doesn't automatically ignore hidden files.
+**Action:** Prefer `os.scandir()` over `glob.glob()` for large directory iteration to improve performance, but explicitly add a `try/except` block and filter out hidden files (`not f.name.startswith('.')`) to maintain functional parity.
