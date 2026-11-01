@@ -1,0 +1,3 @@
+## 2026-11-01 - os.scandir vs glob for directory listing
+**Learning:** For directory listing in Python scripts, `os.scandir()` with `f.is_dir()` checks is significantly faster than `glob.glob()`. However, `os.scandir` requires explicit handling for missing directories (`FileNotFoundError`) and explicit filtering for hidden files (`f.name.startswith('.')`), which `glob` handles automatically. Also, using f-strings for path construction maintains forward-slash parity with `glob` across platforms compared to `os.path.join()`.
+**Action:** Always prefer `os.scandir()` for hot loops or large directory scans, but remember to explicitly replicate `glob`'s default behaviors like ignoring hidden files and handling missing directories.
