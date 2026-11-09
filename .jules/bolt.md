@@ -1,0 +1,3 @@
+## 2026-11-09 - Faster Directory Listing with os.scandir
+**Learning:** When scanning large directories, `glob.glob("skills/*/")` is significantly slower than `os.scandir()`, but `os.scandir()` requires careful handling for missing directories (raises FileNotFoundError), resource leaks (requires context manager), hidden files (which glob ignores), and consistent path separators (f-strings vs os.path.join).
+**Action:** Use `os.scandir()` with a context manager, `try/except FileNotFoundError`, explicit filtering for non-hidden files (`not f.name.startswith('.')`), and f-strings for consistent path slashes when replacing `glob.glob()` for performance optimizations.
